@@ -529,7 +529,7 @@ Page({
 
     // Today banner: only when viewing the current month and today is unmarked.
     const [ty, tm] = this.data.todayKey.split('-').map(Number);
-    const showBanner = !(ty === year && tm === month && records[this.data.todayKey]);
+    const showBanner = ty === year && tm === month && !records[this.data.todayKey];
 
     this.setData({
       year,
