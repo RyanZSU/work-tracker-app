@@ -138,7 +138,7 @@
 .stats-bars {
   display: flex;
   justify-content: space-around;
-  height: 240rpx;
+  height: 280rpx; /* tallest bar (180rpx) + count label + gaps */
 }
 .bar-col {
   display: flex;

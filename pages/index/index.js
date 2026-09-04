@@ -37,12 +37,23 @@ Page({
     this.renderMonth(y, m);
   },
 
+  onShow() {
+    // The app can sit in WeChat's recents across midnight; onShow (not onLoad)
+    // is the resume hook, so refresh "today" and re-render the current month.
+    const t = todayDateKey();
+    if (t !== this.data.todayKey) {
+      this.setData({ todayKey: t });
+      this.renderMonth(this.data.year, this.data.month);
+    }
+  },
+
   renderMonth(year, month) {
     const records = getRecords();
 
     // Enrich grid cells with the day's state + color (empty string when unset).
+    // Guard on a known state so a tampered record value stays neutral.
     const cells = getMonthGrid(year, month).map((cell) => {
-      const state = cell.inMonth && records[cell.key] ? records[cell.key] : '';
+      const state = cell.inMonth && STATES[records[cell.key]] ? records[cell.key] : '';
       return {
         key: cell.key,
         day: cell.day,
@@ -67,6 +78,7 @@ Page({
       }
     }
     const maxCount = Math.max(1, ...Object.keys(counts).map((k) => counts[k]));
+    // Bar heights in rpx, capped so the tallest bar + labels fit the track.
     const stats = Object.keys(STATES).map((key) => ({
       key,
       label: STATES[key].label,

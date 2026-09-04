@@ -886,7 +886,7 @@ with:
     <view class="stats-bars">
       <view class="bar-col" wx:for="{{stats}}" wx:key="key">
         <text class="bar-count">{{item.count}}</text>
-        <view class="bar" style="height: {{item.height}}px; background: {{item.color}}"></view>
+        <view class="bar" style="height: {{item.height}}rpx; background: {{item.color}}"></view>
         <text class="bar-label">{{item.label}}</text>
       </view>
     </view>
@@ -910,7 +910,7 @@ Append:
 .stats-bars {
   display: flex;
   justify-content: space-around;
-  height: 240rpx;
+  height: 280rpx; /* tallest bar (180rpx) + count label + gaps */
 }
 .bar-col {
   display: flex;
