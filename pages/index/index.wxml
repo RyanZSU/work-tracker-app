@@ -1,3 +1,50 @@
 <view class="page">
-  <text>Work Tracker</text>
+  <!-- Month navigation -->
+  <view class="header">
+    <view class="chevron" bindtap="prevMonth">‹</view>
+    <view class="month-title">{{monthLabel}}</view>
+    <view class="chevron" bindtap="nextMonth">›</view>
+    <view class="today-btn" bindtap="goToday">今天</view>
+  </view>
+
+  <!-- Unrecorded-today banner -->
+  <view wx:if="{{showBanner}}" class="banner">今天还没记录，点一下日期标记</view>
+
+  <!-- Legend -->
+  <view class="legend">
+    <view class="legend-item" wx:for="{{statesList}}" wx:key="key">
+      <view class="legend-dot" style="background: {{item.color}}"></view>
+      <text>{{item.label}}</text>
+    </view>
+  </view>
+
+  <!-- Calendar grid -->
+  <view class="grid">
+    <view class="weekday-row">
+      <text class="weekday" wx:for="{{weekdays}}" wx:key="*this">{{item}}</text>
+    </view>
+    <view
+      class="cell {{item.inMonth ? 'cell-day' : 'cell-faded'}} {{item.state ? 'cell-filled' : ''}} {{item.key === todayKey ? 'cell-today' : ''}}"
+      style="{{item.color ? 'background: ' + item.color : ''}}"
+      wx:for="{{cells}}"
+      wx:key="key"
+      data-key="{{item.key}}"
+      bindtap="onTapDay"
+    >
+      <text class="cell-daynum">{{item.day}}</text>
+      <view wx:if="{{item.key === todayKey && !item.state}}" class="today-dot"></view>
+    </view>
+  </view>
+
+  <!-- Monthly stats -->
+  <view class="stats">
+    <view class="stats-bars">
+      <view class="bar-col" wx:for="{{stats}}" wx:key="key">
+        <text class="bar-count">{{item.count}}</text>
+        <view class="bar" style="height: {{item.height}}px; background: {{item.color}}"></view>
+        <text class="bar-label">{{item.label}}</text>
+      </view>
+    </view>
+    <view class="marked-line">{{marked}} / {{total}} days marked</view>
+  </view>
 </view>

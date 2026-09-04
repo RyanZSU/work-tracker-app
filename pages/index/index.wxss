@@ -1,3 +1,168 @@
 .page {
-  padding: 24rpx;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding: 24rpx 24rpx 48rpx;
+  box-sizing: border-box;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  margin-bottom: 20rpx;
+}
+.chevron {
+  width: 64rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48rpx;
+  color: #576b95;
+}
+.month-title {
+  min-width: 220rpx;
+  text-align: center;
+  font-size: 34rpx;
+  font-weight: 600;
+}
+.today-btn {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 24rpx;
+  color: #576b95;
+  border: 2rpx solid #dbe7ff;
+  border-radius: 999rpx;
+  padding: 8rpx 20rpx;
+}
+
+/* Unrecorded-today banner */
+.banner {
+  background: #fff7e6;
+  color: #ad6800;
+  border: 2rpx solid #ffe0a3;
+  border-radius: 12rpx;
+  padding: 14rpx 20rpx;
+  font-size: 24rpx;
+  margin-bottom: 16rpx;
+}
+
+/* Legend */
+.legend {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 24rpx;
+  margin-bottom: 16rpx;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  font-size: 24rpx;
+  color: #646a73;
+}
+.legend-dot {
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 50%;
+}
+
+/* Grid */
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 12rpx 8rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+}
+.weekday-row {
+  display: flex;
+  width: 100%;
+}
+.weekday {
+  width: 14.2857%;
+  text-align: center;
+  font-size: 24rpx;
+  color: #8a909a;
+  padding: 8rpx 0;
+}
+.cell {
+  width: 14.2857%;
+  height: 88rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-sizing: border-box;
+  border-radius: 12rpx;
+}
+.cell-daynum {
+  font-size: 28rpx;
+  color: #1f2329;
+}
+.cell-faded .cell-daynum {
+  color: #c2c7cf;
+}
+.cell-filled .cell-daynum {
+  color: #fff;
+  font-weight: 600;
+}
+.cell-today {
+  box-shadow: inset 0 0 0 3rpx #1f2329;
+}
+.today-dot {
+  position: absolute;
+  bottom: 8rpx;
+  width: 8rpx;
+  height: 8rpx;
+  border-radius: 50%;
+  background: #f57c00;
+}
+
+/* Stats */
+.stats {
+  margin-top: 24rpx;
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 24rpx 24rpx 20rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+}
+.stats-bars {
+  display: flex;
+  justify-content: space-around;
+  height: 240rpx;
+}
+.bar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8rpx;
+}
+.bar-count {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #1f2329;
+}
+.bar {
+  width: 48rpx;
+  border-radius: 8rpx 8rpx 0 0;
+}
+.bar-label {
+  font-size: 22rpx;
+  color: #646a73;
+}
+.marked-line {
+  text-align: center;
+  margin-top: 16rpx;
+  font-size: 24rpx;
+  color: #8a909a;
 }
