@@ -1,0 +1,14 @@
+# macOS
+.DS_Store
+
+# Superpowers brainstorming artifacts
+.superpowers/
+
+# Node
+node_modules/
+
+# Logs
+*.log
+
+# WeChat DevTools
+project.private.config.json
