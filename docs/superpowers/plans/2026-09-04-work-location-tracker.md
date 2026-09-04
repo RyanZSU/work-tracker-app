@@ -6,7 +6,7 @@
 
 **Architecture:** One page (`pages/index`) renders a Monday-first 6×7 calendar month grid plus a stats bar chart. All records live in a single storage key `attendance_records` as a flat `{ "YYYY-MM-DD": state }` map. Pure date/grid math is isolated in `utils/calendar.js`; all `wx` storage access is isolated in `utils/storage.js`; the 4 states' labels/colors are centralized in `utils/states.js`. No third-party dependencies, no build step, no network code.
 
-**Tech Stack:** Native WeChat Mini Program (JavaScript + WXML + WXSS), `wx.setStorageSync`/`wx.getStorageSync` for persistence, `wx.showActionSheet` for day editing, Node.js `assert` for dependency-free smoke tests of the pure modules.
+**Tech Stack:** Native WeChat Mini Program (JavaScript + WXML + WXSS), `wx.setStorageSync`/`wx.getStorageSync` for persistence, a custom in-page bottom sheet for day editing (the native `wx.showActionSheet` is not used — it always appends a 取消 button), Node.js `assert` for dependency-free smoke tests of the pure modules.
 
 ---
 
@@ -778,11 +778,11 @@ EOF
 ## Task 5: Record and clear days via action sheet
 
 **Files:**
-- Modify: `pages/index/index.js`
+- Modify: `pages/index/index.js`, `pages/index/index.wxml` (sheet markup), `pages/index/index.wxss` (mask/sheet styles)
 
-Tapping a day in the visible month opens WeChat's native action sheet with the states except the one that day is already marked with (plus **Clear** when the day already has a record). Picking one saves and re-renders in place.
+Tapping a day in the visible month opens a custom in-page bottom sheet (mask + animated panel) listing the states except the one that day is already marked with (plus **Clear** when the day already has a record). Picking one saves and re-renders in place.
 
-> Note: `wx.showActionSheet` is the system sheet and cannot render the colored dots from the mockup — the state **labels** are shown instead. Functionally identical; this is the intended behavior for a zero-dependency app.
+> Note: a custom sheet is used because `wx.showActionSheet` always appends an unremovable 取消 button. It renders a colored dot per state from `STATES` and drops the label round-trip (state keys are passed directly). Tapping the mask dismisses — there is no 取消 row.
 
 - [ ] **Step 1: Add the tap handlers to `pages/index/index.js`**
 
@@ -799,25 +799,39 @@ Append to the `Page({ ... })` object (after `goToday`, before the closing `});`)
     this._busy = true;
 
     const current = this.data.records[key];
-    const itemList = Object.keys(STATES).map((k) => STATES[k].label);
-    if (current) itemList.push(CLEAR_TEXT);
+    // Offer every state except the one the day is already marked with; a marked
+    // day additionally gets a Clear action. A custom sheet replaces the native
+    // one because wx.showActionSheet always appends an unremovable 取消 button.
+    const actionItems = Object.keys(STATES)
+      .filter((k) => k !== current)
+      .map((k) => ({
+        type: 'set',
+        key: k,
+        label: STATES[k].label,
+        color: STATES[k].color,
+      }));
+    if (current) {
+      actionItems.push({ type: 'clear', key: 'clear', label: CLEAR_TEXT, color: '' });
+    }
 
-    wx.showActionSheet({
-      itemList,
-      itemColor: '#1f2329',
-      success: (res) => {
-        const picked = itemList[res.tapIndex];
-        if (picked === CLEAR_TEXT) {
-          this.applyRecord(key, null, current);
-        } else {
-          const stateKey = Object.keys(STATES).find((k) => STATES[k].label === picked);
-          this.applyRecord(key, stateKey, current);
-        }
-      },
-      complete: () => {
-        this._busy = false;
-      },
-    });
+    this.setData({ showActionSheet: true, actionItems, pendingKey: key });
+  },
+
+  onActionPick(event) {
+    const { type, key } = event.currentTarget.dataset;
+    const pending = this.data.pendingKey;
+    const current = this.data.records[pending];
+    this.closeActionSheet();
+    this.applyRecord(pending, type === 'clear' ? null : key, current);
+  },
+
+  // Taps inside the sheet must not bubble to the mask (which closes it).
+  onSheetTap() {},
+
+  closeActionSheet() {
+    if (!this.data.showActionSheet) return;
+    this.setData({ showActionSheet: false });
+    this._busy = false;
   },
 
   applyRecord(key, state, previous) {
@@ -829,6 +843,8 @@ Append to the `Page({ ... })` object (after `goToday`, before the closing `});`)
     this.renderMonth(this.data.year, this.data.month);
   },
 ```
+
+The sheet markup is appended to `pages/index/index.wxml` before the page's closing `</view>` (a `mask` with `bindtap="closeActionSheet"` wrapping a `sheet` with `catchtap="onSheetTap"`; each row is `bindtap="onActionPick"` with `data-key`/`data-type`), and the `pages/index/index.wxss` gains `.mask`, `.sheet`, `.sheet-item`, `.sheet-item-clear`, `.sheet-dot` plus `mask-fade`/`sheet-up` keyframes.
 
 Also add `records: {}` to the `data` object (next to `todayKey: ''`) so `renderMonth`'s `records` setData and `onTapDay`'s `this.data.records` both reference a declared field.
 
@@ -852,7 +868,7 @@ git commit -m "$(cat <<'EOF'
 feat: record and clear day states via action sheet
 
 Tap a day to pick Office/Home/Leave/Trip (or clear an existing record)
-through the native action sheet, saving to local storage.
+through the custom bottom sheet, saving to local storage.
 
 Co-Authored-By: Claude <noreply@anthropic.com>
 EOF
@@ -1017,5 +1033,5 @@ EOF
 ## Self-review notes (plan author)
 
 - **Spec coverage:** storage key/format matches spec §Data model; `STATES` single source of truth; Monday-first 6×7 grid with non-tappable faded cells; today outline + unrecorded-today dot; banner text verbatim from spec; action sheet with conditional clear; stats per visible month + "X / Y days marked"; corrupt-storage fallback; write-failure toast; busy guard against double taps. All spec items map to a task.
-- **Known intentional deviations:** (1) `wx.showActionSheet` cannot render colored dots — state labels are shown instead (noted in Task 5); (2) dev-only node smoke scripts were added beyond the spec's "manual verification" to give the pure modules a repeatable check — they add no runtime dependencies and are never shipped.
+- **Known intentional deviations:** (1) day editing uses a custom in-page bottom sheet instead of the native `wx.showActionSheet`, because the system sheet always appends a 取消 button and cannot render colored dots; the custom sheet renders dots and has no 取消 row (noted in Task 5); (2) dev-only node smoke scripts were added beyond the spec's "manual verification" to give the pure modules a repeatable check — they add no runtime dependencies and are never shipped.
 - **Type consistency:** `dateKey`, `todayDateKey`, `getMonthGrid`, `toggleMonth`, `getRecords`, `setRecord`, and `STATES` are introduced in Tasks 2–3 and used identically in Tasks 4–6. Cell shape `{ key, day, inMonth }` matches what `renderMonth` enriches.

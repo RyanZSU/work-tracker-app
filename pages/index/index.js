@@ -38,6 +38,9 @@ Page({
     showBanner: false,
     todayKey: '',
     records: {},
+    showActionSheet: false,
+    actionItems: [],
+    pendingKey: '',
   },
 
   onLoad() {
@@ -169,28 +172,39 @@ Page({
     this._busy = true;
 
     const current = this.data.records[key];
-    // Offer every state except the one the day is already marked with.
-    const itemList = Object.keys(STATES)
+    // Offer every state except the one the day is already marked with; a marked
+    // day additionally gets a Clear action. A custom sheet replaces the native
+    // one because wx.showActionSheet always appends an unremovable 取消 button.
+    const actionItems = Object.keys(STATES)
       .filter((k) => k !== current)
-      .map((k) => STATES[k].label);
-    if (current) itemList.push(CLEAR_TEXT);
+      .map((k) => ({
+        type: 'set',
+        key: k,
+        label: STATES[k].label,
+        color: STATES[k].color,
+      }));
+    if (current) {
+      actionItems.push({ type: 'clear', key: 'clear', label: CLEAR_TEXT, color: '' });
+    }
 
-    wx.showActionSheet({
-      itemList,
-      itemColor: '#1f2329',
-      success: (res) => {
-        const picked = itemList[res.tapIndex];
-        if (picked === CLEAR_TEXT) {
-          this.applyRecord(key, null, current);
-        } else {
-          const stateKey = Object.keys(STATES).find((k) => STATES[k].label === picked);
-          this.applyRecord(key, stateKey, current);
-        }
-      },
-      complete: () => {
-        this._busy = false;
-      },
-    });
+    this.setData({ showActionSheet: true, actionItems, pendingKey: key });
+  },
+
+  onActionPick(event) {
+    const { type, key } = event.currentTarget.dataset;
+    const pending = this.data.pendingKey;
+    const current = this.data.records[pending];
+    this.closeActionSheet();
+    this.applyRecord(pending, type === 'clear' ? null : key, current);
+  },
+
+  // Taps inside the sheet must not bubble to the mask (which closes it).
+  onSheetTap() {},
+
+  closeActionSheet() {
+    if (!this.data.showActionSheet) return;
+    this.setData({ showActionSheet: false });
+    this._busy = false;
   },
 
   applyRecord(key, state, previous) {

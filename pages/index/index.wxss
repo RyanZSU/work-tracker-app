@@ -174,3 +174,55 @@
   font-weight: 600;
   color: #1f2329;
 }
+
+/* Custom state-picker sheet (replaces wx.showActionSheet, whose 取消 is not removable) */
+.mask {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 100;
+  animation: mask-fade 0.2s ease-out;
+}
+.sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #fff;
+  border-radius: 24rpx 24rpx 0 0;
+  padding: 16rpx 0 calc(16rpx + env(safe-area-inset-bottom));
+  z-index: 101;
+  animation: sheet-up 0.2s ease-out;
+}
+.sheet-item {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 26rpx 40rpx;
+  font-size: 30rpx;
+  color: #1f2329;
+}
+.sheet-item:active {
+  background: #f5f6f7;
+}
+.sheet-item-clear {
+  color: #e64340;
+  font-weight: 500;
+}
+.sheet-dot {
+  width: 24rpx;
+  height: 24rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+@keyframes mask-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}

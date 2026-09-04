@@ -65,7 +65,7 @@ Page layout, top to bottom:
 
 ## Interactions
 
-- **Tap any current-month day** → native action sheet listing the states **except the one that day is already marked with** (a marked **Office** day offers Home / Leave / Holiday), plus **Clear** (only when the day already has a record).
+- **Tap any current-month day** → custom bottom sheet (mask + animated panel; no 取消 button — the native `wx.showActionSheet` always appends one and is not used) listing the states **except the one that day is already marked with** (a marked **Office** day offers Home / Leave / Holiday), plus **Clear** (only when the day already has a record). Tapping the mask dismisses.
 - Picking a state saves the record and **re-renders the grid + stats in place** — no page navigation.
 - **Clear** removes that day's entry and reverts the tile to blank — including seeded weekend holidays, which stay blank.
 - No pull-to-refresh, no settings page, no multi-select.

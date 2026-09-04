@@ -49,4 +49,21 @@
     <view class="sub-line">Working days: {{workdays}}</view>
     <view class="office-line">Work in Office: {{officePct}}%</view>
   </view>
+
+  <!-- State picker: custom sheet, because wx.showActionSheet always appends a 取消 button -->
+  <view wx:if="{{showActionSheet}}" class="mask" bindtap="closeActionSheet">
+    <view class="sheet" catchtap="onSheetTap">
+      <view
+        class="sheet-item {{item.type === 'clear' ? 'sheet-item-clear' : ''}}"
+        wx:for="{{actionItems}}"
+        wx:key="key"
+        data-key="{{item.key}}"
+        data-type="{{item.type}}"
+        bindtap="onActionPick"
+      >
+        <view wx:if="{{item.color}}" class="sheet-dot" style="background: {{item.color}}"></view>
+        <text>{{item.label}}</text>
+      </view>
+    </view>
+  </view>
 </view>
