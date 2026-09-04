@@ -1,0 +1,13 @@
+{
+  "description": "Work location tracker mini program",
+  "compileType": "miniprogram",
+  "libVersion": "3.7.8",
+  "appid": "wxf972873e3c074a04",
+  "projectname": "work-location-tracker",
+  "setting": {
+    "es6": true,
+    "postcss": true,
+    "minified": true,
+    "urlCheck": true
+  }
+}
