@@ -1,6 +1,6 @@
 // pages/index/index.js
 const { STATES } = require('../../utils/states');
-const { dateKey, todayDateKey, getMonthGrid, toggleMonth } = require('../../utils/calendar');
+const { dateKey, todayDateKey, getMonthGrid, toggleMonth, isWeekend } = require('../../utils/calendar');
 const { getRecords, setRecord } = require('../../utils/storage');
 
 const WEEKDAYS = ['一', '二', '三', '四', '五', '六', '日'];
@@ -8,6 +8,15 @@ const CLEAR_TEXT = '清除记录';
 
 function monthLabel(year, month) {
   return year + '年' + month + '月';
+}
+
+// Effective state for a calendar day: an explicit record wins (when it names a
+// known state); otherwise a Saturday/Sunday defaults to Holiday and a clear
+// weekday stays unmarked.
+function effectiveState(records, dateKeyStr, year, month, day) {
+  const explicit = records[dateKeyStr];
+  if (explicit && STATES[explicit]) return explicit;
+  return isWeekend(year, month, day) ? 'holiday' : '';
 }
 
 Page({
@@ -25,6 +34,8 @@ Page({
     stats: [],
     marked: 0,
     total: 0,
+    workdays: 0,
+    officePct: 0,
     showBanner: false,
     todayKey: '',
     records: {},
@@ -51,9 +62,12 @@ Page({
     const records = getRecords();
 
     // Enrich grid cells with the day's state + color (empty string when unset).
-    // Guard on a known state so a tampered record value stays neutral.
+    // Out-of-month cells stay empty; in-month cells take the effective state
+    // (explicit record, else Holiday for weekends).
     const cells = getMonthGrid(year, month).map((cell) => {
-      const state = cell.inMonth && STATES[records[cell.key]] ? records[cell.key] : '';
+      const state = cell.inMonth
+        ? effectiveState(records, cell.key, year, month, cell.day)
+        : '';
       return {
         key: cell.key,
         day: cell.day,
@@ -71,7 +85,7 @@ Page({
     });
     let marked = 0;
     for (let d = 1; d <= total; d++) {
-      const state = records[dateKey(year, month, d)];
+      const state = effectiveState(records, dateKey(year, month, d), year, month, d);
       if (state && counts[state] !== undefined) {
         counts[state] += 1;
         marked += 1;
@@ -87,9 +101,19 @@ Page({
       height: Math.round((counts[key] / maxCount) * 180),
     }));
 
-    // Today banner: only when viewing the current month and today is unmarked.
-    const [ty, tm] = this.data.todayKey.split('-').map(Number);
-    const showBanner = ty === year && tm === month && !records[this.data.todayKey];
+    // Work-in-office share of the month's working days:
+    // office days / (calendar days - leave days - holiday days).
+    // Holiday already includes defaulted weekends, so the denominator is the
+    // days you could actually have worked (unmarked weekdays included).
+    const workdays = total - counts.leave - counts.holiday;
+    const officePct = workdays > 0 ? Math.round((counts.office / workdays) * 100) : 0;
+
+    // Today banner: only when viewing the current month and today has no
+    // effective state (unrecorded weekday — a weekend already defaults to Holiday).
+    const todayKey = this.data.todayKey;
+    const [ty, tm, td] = todayKey.split('-').map(Number);
+    const todayHandled = !!effectiveState(records, todayKey, ty, tm, td);
+    const showBanner = ty === year && tm === month && !todayHandled;
 
     this.setData({
       year,
@@ -99,6 +123,8 @@ Page({
       stats,
       marked,
       total,
+      workdays,
+      officePct,
       showBanner,
       records,
     });

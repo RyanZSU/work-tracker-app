@@ -2,10 +2,21 @@
 const KEY = 'attendance_records';
 
 // Read the full record map. Corrupt or missing data falls back to {}.
+// Legacy "trip" values (the state was renamed to "holiday") are normalized
+// on read; the next write persists the migration naturally.
 function getRecords() {
   try {
     const raw = wx.getStorageSync(KEY);
-    if (raw && typeof raw === 'object' && !Array.isArray(raw)) return raw;
+    if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+      if (Object.keys(raw).some((k) => raw[k] === 'trip')) {
+        const migrated = Object.assign({}, raw);
+        Object.keys(migrated).forEach((key) => {
+          if (migrated[key] === 'trip') migrated[key] = 'holiday';
+        });
+        return migrated;
+      }
+      return raw;
+    }
     return {};
   } catch (err) {
     console.error('[storage] read failed', err);

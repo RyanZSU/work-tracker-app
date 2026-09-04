@@ -24,6 +24,11 @@ assert.deepStrictEqual(getRecords(), {});
 store.attendance_records = { '2026-09-04': 'office' };
 assert.deepStrictEqual(getRecords(), { '2026-09-04': 'office' });
 
+// legacy "trip" values migrate to "holiday" on read
+store.attendance_records = { '2026-09-01': 'trip', '2026-09-02': 'home' };
+assert.deepStrictEqual(getRecords(), { '2026-09-01': 'holiday', '2026-09-02': 'home' });
+store.attendance_records = { '2026-09-04': 'office' };
+
 // setRecord writes new days and overwrites existing ones
 assert.strictEqual(setRecord('2026-09-05', 'home'), true);
 assert.deepStrictEqual(getRecords(), { '2026-09-04': 'office', '2026-09-05': 'home' });
@@ -36,7 +41,7 @@ assert.deepStrictEqual(getRecords(), { '2026-09-04': 'office' });
 
 // write failure -> returns false and preserves previous state
 throwOnWrite = true;
-assert.strictEqual(setRecord('2026-09-06', 'trip'), false);
+assert.strictEqual(setRecord('2026-09-06', 'holiday'), false);
 assert.deepStrictEqual(getRecords(), { '2026-09-04': 'office' });
 throwOnWrite = false;
 

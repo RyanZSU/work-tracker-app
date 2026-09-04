@@ -46,5 +46,7 @@
       </view>
     </view>
     <view class="marked-line">{{marked}} / {{total}} days marked</view>
+    <view class="sub-line">Working days: {{workdays}}</view>
+    <view class="office-line">Work in Office: {{officePct}}%</view>
   </view>
 </view>

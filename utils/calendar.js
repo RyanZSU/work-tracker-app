@@ -54,4 +54,11 @@ function toggleMonth(year, month, delta) {
   return { year: Math.floor(total / 12), month: (total % 12) + 1 };
 }
 
-module.exports = { dateKey, todayDateKey, getMonthGrid, toggleMonth };
+// True when the given day falls on Saturday or Sunday. Weekends default to
+// Holiday in the UI, so this is date math shared by the grid and stats.
+function isWeekend(year, month, day) {
+  const dow = new Date(year, month - 1, day).getDay(); // JS: 0 = Sun, 6 = Sat
+  return dow === 0 || dow === 6;
+}
+
+module.exports = { dateKey, todayDateKey, getMonthGrid, toggleMonth, isWeekend };

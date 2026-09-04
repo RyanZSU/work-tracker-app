@@ -5,7 +5,7 @@
 
 ## Summary
 
-A personal WeChat Mini Program that records, for each day, whether the user worked **in the office**, **at home**, took **leave**, or was on a **business trip**. All data is stored locally on the device — no server, no cloud, no network code. The main (and only) screen shows a color-coded month calendar with a per-month stats bar chart below it. The user's stated goal is to understand their own office-vs-home patterns over time.
+A personal WeChat Mini Program that records, for each day, whether the user worked **in the office**, **at home**, took **leave**, or was **on holiday**. All data is stored locally on the device — no server, no cloud, no network code. The main (and only) screen shows a color-coded month calendar with a per-month stats bar chart below it. The user's stated goal is to understand their own office-vs-home patterns over time.
 
 ## Goals / Non-goals
 
@@ -24,10 +24,11 @@ A personal WeChat Mini Program that records, for each day, whether the user work
 
 - **Single storage key** `attendance_records` in `wx.setStorageSync`.
 - **Value:** flat object map `{ "YYYY-MM-DD": "office" }`.
-- **State values (fixed strings):** `office | home | leave | trip`.
+- **State values (fixed strings):** `office | home | leave | holiday`.
 - **`STATES` constant:** label + color per state, defined once and shared by the grid, legend, action sheet, and stats — the single source of truth for presentation.
 - **Date keys:** local time, zero-padded (`2026-09-04`).
 - **No second source of truth:** every view derives from the one map. The month grid filters by the `YYYY-MM` prefix; stats count values within the current visible month.
+- **Weekend default:** a Saturday/Sunday with no explicit record derives as `holiday` at render time (never written to storage). An explicit record always overrides the default; clearing an explicit weekend record returns it to the default.
 
 ## Project structure
 
@@ -70,7 +71,9 @@ Page layout, top to bottom:
 ## Stats
 
 - Bars always reflect the **visible month** — the header chevrons double as stats navigation.
-- **"X / Y days marked"** counts marked days vs total days in that month; an empty month reads as visibly empty rather than silently zero.
+- **"X / Y days marked"** counts days with a non-empty effective state (explicit record or defaulted weekend Holiday) vs total days in that month; an untouched month therefore shows its weekend holidays rather than silently zero.
+- **Work-in-office %** = Office days ÷ (Calendar days − Leave days − Holiday days), rounded to an integer and shown as a line under the bars. The denominator is the month's working days (unmarked weekdays included); Holiday already contains defaulted weekends.
+- **Working days** = Calendar days − Leave days − Holiday days, shown as its own small line next to the work-in-office %.
 
 ## Error handling & edge cases
 
@@ -78,7 +81,7 @@ Page layout, top to bottom:
 - **Write failure** (storage quota exceeded): `wx.showToast('保存失败')`, keep the previous in-memory state so the UI doesn't misreport.
 - **Month boundaries:** faded out-of-month cells are not tappable, so no out-of-range writes are possible.
 - **Fast repeated taps:** the action sheet is modal, and a single busy-guard in the page prevents double-firing a save.
-- **Missed days** stay unmarked (gray) — no "unrecorded = office" assumption.
+- **Missed weekdays** stay unmarked (gray) — no "unrecorded = office" assumption; weekends instead default to Holiday.
 
 ## Testing
 

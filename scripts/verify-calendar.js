@@ -1,5 +1,5 @@
 const assert = require('assert');
-const { dateKey, todayDateKey, getMonthGrid, toggleMonth } = require('../utils/calendar');
+const { dateKey, todayDateKey, getMonthGrid, toggleMonth, isWeekend } = require('../utils/calendar');
 
 // dateKey zero-pads year, month, day (month is 1-based)
 assert.strictEqual(dateKey(2026, 9, 4), '2026-09-04');
@@ -25,6 +25,11 @@ assert.strictEqual(inMonth.length, 30);
 // every cell carries the visible day-of-month number
 assert.strictEqual(grid[1].day, 1); // first real day
 assert.strictEqual(grid[0].day, 31); // Aug 31 shown in the head slot
+
+// isWeekend: Saturdays and Sundays only
+assert.strictEqual(isWeekend(2026, 9, 5), true); // Saturday
+assert.strictEqual(isWeekend(2026, 9, 6), true); // Sunday
+assert.strictEqual(isWeekend(2026, 9, 4), false); // Friday
 
 // toggleMonth: +1/-1 with year wrap
 assert.deepStrictEqual(toggleMonth(2026, 1, -1), { year: 2025, month: 12 });
