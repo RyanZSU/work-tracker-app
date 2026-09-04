@@ -54,8 +54,8 @@ function toggleMonth(year, month, delta) {
   return { year: Math.floor(total / 12), month: (total % 12) + 1 };
 }
 
-// True when the given day falls on Saturday or Sunday. Weekends default to
-// Holiday in the UI, so this is date math shared by the grid and stats.
+// True when the given day falls on Saturday or Sunday. Used to seed the
+// weekend Holiday default (see seedWeekendHolidays in pages/index/index.js).
 function isWeekend(year, month, day) {
   const dow = new Date(year, month - 1, day).getDay(); // JS: 0 = Sun, 6 = Sat
   return dow === 0 || dow === 6;

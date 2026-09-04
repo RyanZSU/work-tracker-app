@@ -457,7 +457,7 @@ const { dateKey, todayDateKey, getMonthGrid, toggleMonth } = require('../../util
 const { getRecords, setRecord } = require('../../utils/storage');
 
 const WEEKDAYS = ['一', '二', '三', '四', '五', '六', '日'];
-const CLEAR_TEXT = '清除记录';
+const CLEAR_TEXT = 'Clear';
 
 function monthLabel(year, month) {
   return year + '年' + month + '月';
@@ -780,7 +780,7 @@ EOF
 **Files:**
 - Modify: `pages/index/index.js`
 
-Tapping a day in the visible month opens WeChat's native action sheet with the four states (plus 「清除记录」 when the day is already set). Picking one saves and re-renders in place.
+Tapping a day in the visible month opens WeChat's native action sheet with the states except the one that day is already marked with (plus **Clear** when the day already has a record). Picking one saves and re-renders in place.
 
 > Note: `wx.showActionSheet` is the system sheet and cannot render the colored dots from the mockup — the state **labels** are shown instead. Functionally identical; this is the intended behavior for a zero-dependency app.
 
@@ -835,10 +835,10 @@ Also add `records: {}` to the `data` object (next to `todayKey: ''`) so `renderM
 - [ ] **Step 2: Verify in WeChat DevTools**
 
 Ask the user to confirm:
-1. Tap **3** → an action sheet appears with `Office, Home, Leave, Trip`.
+1. Tap **3** → an action sheet appears with `Office, Home, Leave, Holiday`.
 2. Pick **Home** → day 3 fills blue, legend unchanged, stats area still hidden (Task 6), banner still visible, and the storage panel in DevTools shows `attendance_records` = `{"2026-09-03":"home"}`.
-3. Tap **3** again → the sheet now also shows **清除记录**.
-4. Pick **清除记录** → day 3 reverts to neutral and the stored value is removed.
+3. Tap **3** again → the sheet now drops Home and shows **Clear** next to the remaining states.
+4. Pick **Clear** → day 3 reverts to neutral and the stored value is removed.
 5. Tap **Office** on day 3, then re-tap and change to **Leave** → the tile recolors and storage updates.
 6. Tap a faded edge cell (e.g. the 31 at the top) → nothing happens, no sheet.
 

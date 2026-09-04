@@ -1,22 +1,21 @@
 // pages/index/index.js
 const { STATES } = require('../../utils/states');
 const { dateKey, todayDateKey, getMonthGrid, toggleMonth, isWeekend } = require('../../utils/calendar');
-const { getRecords, setRecord } = require('../../utils/storage');
+const { getRecords, setRecord, getSeededHolidayMonths, markSeededHolidayMonth } = require('../../utils/storage');
 
 const WEEKDAYS = ['一', '二', '三', '四', '五', '六', '日'];
-const CLEAR_TEXT = '清除记录';
+const CLEAR_TEXT = 'Clear';
 
 function monthLabel(year, month) {
   return year + '年' + month + '月';
 }
 
-// Effective state for a calendar day: an explicit record wins (when it names a
-// known state); otherwise a Saturday/Sunday defaults to Holiday and a clear
-// weekday stays unmarked.
-function effectiveState(records, dateKeyStr, year, month, day) {
+// Effective state for a calendar day: the explicit record when it names a
+// known state, else blank. There is no derived default anymore — weekends are
+// Holiday because a real 'holiday' record was seeded, not by rule.
+function effectiveState(records, dateKeyStr) {
   const explicit = records[dateKeyStr];
-  if (explicit && STATES[explicit]) return explicit;
-  return isWeekend(year, month, day) ? 'holiday' : '';
+  return explicit && STATES[explicit] ? explicit : '';
 }
 
 Page({
@@ -60,14 +59,13 @@ Page({
 
   renderMonth(year, month) {
     const records = getRecords();
+    this.seedWeekendHolidays(year, month, records);
 
     // Enrich grid cells with the day's state + color (empty string when unset).
-    // Out-of-month cells stay empty; in-month cells take the effective state
-    // (explicit record, else Holiday for weekends).
+    // There is no derived default: a day shows a state only when it has a
+    // record (weekends have seeded Holiday records; cleared days stay blank).
     const cells = getMonthGrid(year, month).map((cell) => {
-      const state = cell.inMonth
-        ? effectiveState(records, cell.key, year, month, cell.day)
-        : '';
+      const state = cell.inMonth ? effectiveState(records, cell.key) : '';
       return {
         key: cell.key,
         day: cell.day,
@@ -85,7 +83,7 @@ Page({
     });
     let marked = 0;
     for (let d = 1; d <= total; d++) {
-      const state = effectiveState(records, dateKey(year, month, d), year, month, d);
+      const state = effectiveState(records, dateKey(year, month, d));
       if (state && counts[state] !== undefined) {
         counts[state] += 1;
         marked += 1;
@@ -103,16 +101,15 @@ Page({
 
     // Work-in-office share of the month's working days:
     // office days / (calendar days - leave days - holiday days).
-    // Holiday already includes defaulted weekends, so the denominator is the
-    // days you could actually have worked (unmarked weekdays included).
+    // Holiday already includes the seeded weekend records, so the denominator
+    // is the days you could actually have worked (unmarked weekdays included).
     const workdays = total - counts.leave - counts.holiday;
     const officePct = workdays > 0 ? Math.round((counts.office / workdays) * 100) : 0;
 
-    // Today banner: only when viewing the current month and today has no
-    // effective state (unrecorded weekday — a weekend already defaults to Holiday).
+    // Today banner: only when viewing the current month and today has no record.
     const todayKey = this.data.todayKey;
-    const [ty, tm, td] = todayKey.split('-').map(Number);
-    const todayHandled = !!effectiveState(records, todayKey, ty, tm, td);
+    const [ty, tm] = todayKey.split('-').map(Number);
+    const todayHandled = !!effectiveState(records, todayKey);
     const showBanner = ty === year && tm === month && !todayHandled;
 
     this.setData({
@@ -145,6 +142,23 @@ Page({
     this.renderMonth(y, m);
   },
 
+  // Materialize the Holiday default for a month's weekends as real records,
+  // once per month (tracked in storage). Because weekends are no longer
+  // Holiday by derivation, a weekend the user clears stays blank — the seed
+  // skips months that were already seeded.
+  seedWeekendHolidays(year, month, records) {
+    const monthKey = dateKey(year, month, 1).slice(0, 7); // "YYYY-MM"
+    if (getSeededHolidayMonths()[monthKey]) return;
+    const total = new Date(year, month, 0).getDate();
+    for (let d = 1; d <= total; d++) {
+      const key = dateKey(year, month, d);
+      if (!records[key] && isWeekend(year, month, d)) {
+        if (setRecord(key, 'holiday')) records[key] = 'holiday';
+      }
+    }
+    markSeededHolidayMonth(monthKey);
+  },
+
   onTapDay(event) {
     const key = event.currentTarget.dataset.key;
     if (!key) return;
@@ -155,7 +169,10 @@ Page({
     this._busy = true;
 
     const current = this.data.records[key];
-    const itemList = Object.keys(STATES).map((k) => STATES[k].label);
+    // Offer every state except the one the day is already marked with.
+    const itemList = Object.keys(STATES)
+      .filter((k) => k !== current)
+      .map((k) => STATES[k].label);
     if (current) itemList.push(CLEAR_TEXT);
 
     wx.showActionSheet({

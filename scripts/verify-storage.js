@@ -11,7 +11,7 @@ global.wx = {
   },
 };
 
-const { getRecords, setRecord } = require('../utils/storage');
+const { getRecords, setRecord, getSeededHolidayMonths, markSeededHolidayMonth } = require('../utils/storage');
 
 // empty storage -> empty map
 assert.deepStrictEqual(getRecords(), {});
@@ -44,5 +44,14 @@ throwOnWrite = true;
 assert.strictEqual(setRecord('2026-09-06', 'holiday'), false);
 assert.deepStrictEqual(getRecords(), { '2026-09-04': 'office' });
 throwOnWrite = false;
+
+// seeded-holiday month tracking: empty initially, marks once, survives failure
+assert.deepStrictEqual(getSeededHolidayMonths(), {});
+assert.strictEqual(markSeededHolidayMonth('2026-09'), true);
+assert.deepStrictEqual(getSeededHolidayMonths(), { '2026-09': true });
+throwOnWrite = true;
+assert.strictEqual(markSeededHolidayMonth('2026-10'), false);
+throwOnWrite = false;
+assert.deepStrictEqual(getSeededHolidayMonths(), { '2026-09': true });
 
 console.log('verify-storage: all assertions passed');
